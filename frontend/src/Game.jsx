@@ -4,6 +4,7 @@ import MainMenu from "./Menu";
 import { VerifierComponent } from "./Verifier";
 export const Game = () => {
   const gameRef = useRef(null);
+  const [uname, setUname] = useState("")
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(true);
   const [proof, setProof] = useState({
@@ -27,8 +28,13 @@ export const Game = () => {
       },
       scene: [MainMenu, GameScene],
     };
+
+    let name = prompt("Enter Username")
+    if (name) setUname(name)
+
     const game = new Phaser.Game(config);
     gameRef.current = game;
+
     return () => game.destroy(true);
   }, []);
 
@@ -63,6 +69,7 @@ export const Game = () => {
       this.load.audio("crisisrizz", "assets/crisisrizz.mp3");
       this.load.audio("alarm", "assets/alarm.mp3");
       this.load.audio("babah", "assets/babah.mp3");
+      this.load.audio("shot", "assets/shot.mp3")
     }
 
     create() {
@@ -92,6 +99,8 @@ export const Game = () => {
 
       this.deathsound = this.sound.add("death");
       this.starsound = this.sound.add("star");
+      this.shot = this.sound.add("shot");
+      this.shot.setVolume(0.6)
       this.crisissound = this.sound.add("crisisrizz");
       this.alarm = this.sound.add("alarm");
       this.boom = this.sound.add("babah");
@@ -160,11 +169,12 @@ export const Game = () => {
 
       function FIRE() {
         if (this.gameOver) return;
+        this.shot.play()
         let xvec = this.player.x - 1500;
         let yvec = this.player.y - 100;
         const rocket = this.physics.add
           .sprite(1500, 100, "rocket")
-          .setScale(0.25 + score / 20000);
+          .setScale(0.32 + score / 20000);
         rocket.rotation = Phaser.Math.Angle.Between(
           rocket.x,
           rocket.y,
@@ -304,7 +314,7 @@ export const Game = () => {
       if (!this.gameOver) {
         this.ground.tilePositionX += 1 + this.score / 300;
         this.killzone.x = Math.min(this.killzone.x + 0.05, 500);
-        this.player.setVelocityX(13 + score / 700);
+        this.player.setVelocityX(15 + score / 500);
         this.score += 1;
         this.scoreText.setText("Score: " + (this.score + this.bonusscore));
 
@@ -356,6 +366,7 @@ export const Game = () => {
   }
 
   const ProofRequest = () => {
+    alert(`Generating proof of ${score} score for ${uname || "ANON"}`)
     alert("Proving takes long, pls wait");
     setIsProving(true);
     fetch("http://localhost:3000/score", {
@@ -363,7 +374,7 @@ export const Game = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ points: score }),
+      body: JSON.stringify({points: score}),
     })
       .then((r) => r.json())
       .then((r) => {
@@ -379,14 +390,14 @@ export const Game = () => {
 
   return (
     <div className="flex flex-col justify-start items-center gap-10">
-      <div id="game-container" className="relative border-8 border-pink-400">
+      <div id="game-container" className="relative border-8 border-l-white border-r-white border-b-white border-t-0">
         {gameOver && (
           <div className="absolute text-pink-500 left-[730px] top-[230px] text-5xl font-bold">
             YOUR HIGH SCORE: {score}
           </div>
         )}
       </div>
-      {gameOver && score && (
+      {/* {gameOver && score>0 && (
         <button
           disabled={isProving}
           onClick={ProofRequest}
@@ -405,7 +416,7 @@ export const Game = () => {
           b={proof["public-inputs"]}
           c={proof["vkey-hash"]}
         />
-      )}
+      )} */}
     </div>
   );
 };
