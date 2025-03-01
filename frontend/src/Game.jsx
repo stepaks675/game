@@ -4,7 +4,7 @@ import MainMenu from "./Menu";
 import { VerifierComponent } from "./Verifier";
 export const Game = () => {
   const gameRef = useRef(null);
-  const [uname, setUname] = useState("")
+  const [uname, setUname] = useState("");
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(true);
   const [proof, setProof] = useState({
@@ -29,8 +29,8 @@ export const Game = () => {
       scene: [MainMenu, GameScene],
     };
 
-    let name = prompt("Enter Username")
-    if (name) setUname(name)
+    let name = prompt("Enter Username");
+    if (name) setUname(name);
 
     const game = new Phaser.Game(config);
     gameRef.current = game;
@@ -69,7 +69,7 @@ export const Game = () => {
       this.load.audio("crisisrizz", "assets/crisisrizz.mp3");
       this.load.audio("alarm", "assets/alarm.mp3");
       this.load.audio("babah", "assets/babah.mp3");
-      this.load.audio("shot", "assets/shot.mp3")
+      this.load.audio("shot", "assets/shot.mp3");
     }
 
     create() {
@@ -100,7 +100,7 @@ export const Game = () => {
       this.deathsound = this.sound.add("death");
       this.starsound = this.sound.add("star");
       this.shot = this.sound.add("shot");
-      this.shot.setVolume(0.6)
+      this.shot.setVolume(0.6);
       this.crisissound = this.sound.add("crisisrizz");
       this.alarm = this.sound.add("alarm");
       this.boom = this.sound.add("babah");
@@ -169,7 +169,7 @@ export const Game = () => {
 
       function FIRE() {
         if (this.gameOver) return;
-        this.shot.play()
+        this.shot.play();
         let xvec = this.player.x - 1500;
         let yvec = this.player.y - 100;
         const rocket = this.physics.add
@@ -308,65 +308,75 @@ export const Game = () => {
       });
 
       this.physics.add.collider(this.player, this.realground);
+
+      this.time.addEvent({
+        delay: 1000 / 60, 
+        callback: fixedUpdate,
+        callbackScope: this,
+        loop: true,
+      });
+
+      function fixedUpdate (){
+        if (!this.gameOver) {
+          this.ground.tilePositionX += 1 + this.score / 300;
+          this.killzone.x = Math.min(this.killzone.x + 0.05, 500);
+          this.player.setVelocityX(15 + score / 500);
+          this.score += 1;
+          this.scoreText.setText("Score: " + (this.score + this.bonusscore));
+  
+          if (this.player.x < this.killzone.x + 230) {
+            setScore((p) => Math.max(this.score + this.bonusscore, p));
+            this.deathsound.play();
+            this.gameOver = true;
+            this.alarm.stop();
+            this.physics.pause();
+            this.bgmusic.stop();
+  
+            setTimeout(() => {
+              this.scene.start("MainMenu");
+            }, 3000);
+            setTimeout(() => {
+              setGameOver(true);
+            }, 3000);
+          }
+          if (this.cursors.up.isDown && this.player.body.touching.down) {
+            this.jumpDuration = 1;
+            this.jumpsound.play();
+            this.player.setVelocityY(-500);
+          }
+  
+          if (this.jumpDuration > 0) {
+            if (this.cursors.up.isDown && this.jumpDuration < 30) {
+              this.player.setVelocityY(-500 + this.jumpDuration * 2);
+              this.jumpDuration++;
+            } else {
+              this.jumpDuration = 0;
+            }
+          }
+          if (this.player.body.touching.down) {
+            this.player.anims.play("run", true);
+          } else {
+            if (this.player.body.velocity.y < 0) {
+              this.player.setTexture("crabjump");
+            } else {
+              this.player.setTexture("crabfall");
+            }
+          }
+          this.obstacles.children.each((obstacle) => {
+            if (obstacle.x < -100) {
+              this.obstacles.remove(obstacle, true, true);
+            }
+          });
+        }
+      }
     }
 
     update() {
-      if (!this.gameOver) {
-        this.ground.tilePositionX += 1 + this.score / 300;
-        this.killzone.x = Math.min(this.killzone.x + 0.05, 500);
-        this.player.setVelocityX(15 + score / 500);
-        this.score += 1;
-        this.scoreText.setText("Score: " + (this.score + this.bonusscore));
-
-        if (this.player.x < this.killzone.x + 230) {
-          setScore((p) => Math.max(this.score + this.bonusscore, p));
-          this.deathsound.play();
-          this.gameOver = true;
-          this.alarm.stop();
-          this.physics.pause();
-          this.bgmusic.stop();
-
-          setTimeout(() => {
-            this.scene.start("MainMenu");
-          }, 3000);
-          setTimeout(() => {
-            setGameOver(true);
-          }, 3000);
-        }
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-          this.jumpDuration = 1;
-          this.jumpsound.play();
-          this.player.setVelocityY(-500);
-        }
-
-        if (this.jumpDuration > 0) {
-          if (this.cursors.up.isDown && this.jumpDuration < 30) {
-            this.player.setVelocityY(-500 + this.jumpDuration * 2);
-            this.jumpDuration++;
-          } else {
-            this.jumpDuration = 0;
-          }
-        }
-        if (this.player.body.touching.down) {
-          this.player.anims.play("run", true);
-        } else {
-          if (this.player.body.velocity.y < 0) {
-            this.player.setTexture("crabjump");
-          } else {
-            this.player.setTexture("crabfall");
-          }
-        }
-        this.obstacles.children.each((obstacle) => {
-          if (obstacle.x < -100) {
-            this.obstacles.remove(obstacle, true, true);
-          }
-        });
-      }
     }
   }
 
   const ProofRequest = () => {
-    alert(`Generating proof of ${score} score for ${uname || "ANON"}`)
+    alert(`Generating proof of ${score} score for ${uname || "ANON"}`);
     alert("Proving takes long, pls wait");
     setIsProving(true);
     fetch("http://localhost:3000/score", {
@@ -374,7 +384,7 @@ export const Game = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({points: score}),
+      body: JSON.stringify({ points: score }),
     })
       .then((r) => r.json())
       .then((r) => {
@@ -390,7 +400,10 @@ export const Game = () => {
 
   return (
     <div className="flex flex-col justify-start items-center gap-10">
-      <div id="game-container" className="relative border-8 border-l-white border-r-white border-b-white border-t-0">
+      <div
+        id="game-container"
+        className="relative border-8 border-l-white border-r-white border-b-white border-t-0"
+      >
         {gameOver && (
           <div className="absolute text-pink-500 left-[730px] top-[230px] text-5xl font-bold">
             YOUR HIGH SCORE: {score}
