@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { useEffect, useState, useRef } from "react";
 import MainMenu from "./Menu";
 import { VerifierComponent } from "./Verifier";
-export const Game = () => {
+export const Game = ({setPlaying}) => {
   const gameRef = useRef(null);
   const [uname, setUname] = useState("");
   const [score, setScore] = useState(0);
@@ -73,6 +73,7 @@ export const Game = () => {
     }
 
     create() {
+      setPlaying(true)
       setGameOver(false);
       this.anims.create({
         key: "run",
@@ -334,25 +335,25 @@ export const Game = () => {
   
             setTimeout(() => {
               this.scene.start("MainMenu");
-            }, 3000);
-            setTimeout(() => {
               setGameOver(true);
+              setPlaying(false)
             }, 3000);
           }
-          if (this.cursors.up.isDown && this.player.body.touching.down) {
+          if ((this.cursors.up.isDown || this.cursors.space.isDown) && this.player.body.touching.down) {
             this.jumpDuration = 1;
             this.jumpsound.play();
             this.player.setVelocityY(-500);
           }
   
           if (this.jumpDuration > 0) {
-            if (this.cursors.up.isDown && this.jumpDuration < 30) {
+            if ((this.cursors.up.isDown || this.cursors.space.isDown) && this.jumpDuration < 30) {
               this.player.setVelocityY(-500 + this.jumpDuration * 2);
               this.jumpDuration++;
             } else {
               this.jumpDuration = 0;
             }
           }
+
           if (this.player.body.touching.down) {
             this.player.anims.play("run", true);
           } else {
